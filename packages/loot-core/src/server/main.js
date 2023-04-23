@@ -11,7 +11,6 @@ import * as fs from '../platform/server/fs';
 import logger from '../platform/server/log';
 import * as sqlite from '../platform/server/sqlite';
 import * as uuid from '../platform/uuid';
-import { fromPlaidAccountType } from '../shared/accounts';
 import { isNonProductionEnvironment } from '../shared/environment';
 import * as monthUtils from '../shared/months';
 import q, { Query } from '../shared/query';
@@ -801,7 +800,6 @@ handlers['accounts-link'] = async function ({
     id: upgradingId,
     account_id: account.account_id,
     official_name: account.official_name,
-    type: fromPlaidAccountType(account.type),
     balance_current: amountToInteger(account.balances.current),
     balance_available: amountToInteger(account.balances.available),
     balance_limit: amountToInteger(account.balances.limit),
@@ -851,7 +849,6 @@ handlers['nordigen-accounts-link'] = async function ({
       mask: account.mask,
       name: account.name,
       official_name: account.official_name,
-      type: account.type,
       bank: bank.id,
     });
     await db.insertPayee({
@@ -900,7 +897,6 @@ handlers['nordigen-accounts-connect'] = async function ({
 
 handlers['account-create'] = mutator(async function ({
   name,
-  type,
   balance,
   offBudget,
   closed,
@@ -908,7 +904,6 @@ handlers['account-create'] = mutator(async function ({
   return withUndo(async () => {
     const id = await db.insertAccount({
       name,
-      type,
       offbudget: offBudget ? 1 : 0,
       closed: closed ? 1 : 0,
     });
