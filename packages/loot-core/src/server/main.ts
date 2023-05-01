@@ -82,7 +82,6 @@ import { uniqueFileName, idFromFileName } from './util/budget-name';
 
 let DEMO_BUDGET_ID = '_demo-budget';
 let TEST_BUDGET_ID = '_test-budget';
-let UNCONFIGURED_SERVER = 'https://not-configured/';
 
 // util
 
@@ -1660,7 +1659,7 @@ handlers['key-test'] = async function ({ fileId, password }) {
 handlers['subscribe-needs-bootstrap'] = async function ({
   url,
 }: { url? } = {}) {
-  if (getServer(url).BASE_SERVER === UNCONFIGURED_SERVER) {
+  if (!getServer(url)) {
     return { bootstrapped: true, hasServer: false };
   }
 
@@ -1704,7 +1703,7 @@ handlers['subscribe-set-user'] = async function ({ token }) {
 };
 
 handlers['subscribe-get-user'] = async function () {
-  if (getServer() && getServer().BASE_SERVER === UNCONFIGURED_SERVER) {
+  if (!getServer()) {
     return { offline: false };
   }
 
@@ -1775,7 +1774,7 @@ handlers['subscribe-sign-out'] = async function () {
 };
 
 handlers['get-server-version'] = async function () {
-  if (!getServer() || getServer().BASE_SERVER === UNCONFIGURED_SERVER) {
+  if (!getServer()) {
     return { error: 'no-server' };
   }
 
@@ -1807,9 +1806,6 @@ handlers['set-server-url'] = async function ({ url, validate = true }) {
         return { error };
       }
     }
-  } else {
-    // When the server isn't configured, we just use a placeholder
-    url = UNCONFIGURED_SERVER;
   }
 
   asyncStorage.setItem('server-url', url);
@@ -2277,10 +2273,12 @@ async function loadBudget(id) {
   if (process.env.NODE_ENV !== 'test') {
     if (process.env.IS_BETA || id === DEMO_BUDGET_ID) {
       setSyncingMode('disabled');
-    } else if (id === TEST_BUDGET_ID) {
-      await asyncStorage.setItem('lastBudget', id);
     } else {
-      setSyncingMode('enabled');
+      if (getServer()) {
+        setSyncingMode('enabled');
+      } else {
+        setSyncingMode('disabled');
+      }
 
       await asyncStorage.setItem('lastBudget', id);
 
@@ -2439,7 +2437,9 @@ export async function initApp(isDev, socketName) {
   // }
 
   const url = await asyncStorage.getItem('server-url');
-  if (url) {
+  if (url === 'https://not-configured/') {
+    await asyncStorage.setItem('server-url', null);
+  } else if (url) {
     setServer(url);
   }
 
