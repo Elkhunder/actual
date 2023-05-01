@@ -98,7 +98,7 @@ export default function FormatSettings({ prefs, savePrefs }) {
             <Text style={{ display: 'flex' }}>
               <Checkbox
                 id="settings-textDecimal"
-                checked={prefs.hideFraction}
+                checked={!!prefs.hideFraction}
                 onChange={onHideFraction}
               />
               <label htmlFor="settings-textDecimal">Hide decimal places</label>
